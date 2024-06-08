@@ -14,7 +14,7 @@ files=(
     "Location.csv"
     "Magnetometer.csv"
     "Proximity.csv"
-    # "time.csv" ??
+    "time.csv" 
 
 )
 
