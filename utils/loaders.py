@@ -12,7 +12,6 @@ class BaseLoader:
 
     The following must be implemented in children classes:
         - **FILENAME**: (class variable) (e.g. "Accelerometer.csv)
-        - **columns**: (property) (e.g. ["X (m/s^2)", "Y (m/s^2)", "Z (m/s^2)"])
         - **column_function_map**: (property) (a map between column name and
             aggregation function for that column)
 
@@ -26,12 +25,12 @@ class BaseLoader:
     FILENAME = ""
 
     @property
-    def columns(self) -> list[str]:
+    def column_function_map(self) -> dict[str, Callable]:
         pass
 
     @property
-    def column_function_map(self) -> list[str, Callable]:
-        pass
+    def columns(self) -> list[str]:
+        return list(self.column_function_map.keys())
 
     def __init__(self, *, base_path: str, date_range: pd.DatetimeIndex) -> None:
         self.path = self.check_path(base_path)
@@ -81,10 +80,6 @@ class AccelerometerLoader(BaseLoader):
     FILENAME = "Accelerometer.csv"
 
     @property
-    def columns(self) -> list[str]:
-        return ["X (m/s^2)", "Y (m/s^2)", "Z (m/s^2)"]
-
-    @property
     def column_function_map(self) -> dict[str, Callable]:
         return {
             "X (m/s^2)": np.mean,
@@ -101,10 +96,6 @@ class BarometerLoader(BaseLoader):
     FILENAME = "Barometer.csv"
 
     @property
-    def columns(self) -> list[str]:
-        return ["X (hPa)"]
-
-    @property
     def column_function_map(self) -> dict[str, Callable]:
         return {"X (hPa)": np.mean}
 
@@ -115,10 +106,6 @@ class BarometerLoader(BaseLoader):
 class GyroscopeLoader(BaseLoader):
 
     FILENAME = "Gyroscope.csv"
-
-    @property
-    def columns(self) -> list[str]:
-        return ["X (rad/s)", "Y (rad/s)", "Z (rad/s)"]
 
     @property
     def column_function_map(self) -> dict[str, Callable]:
@@ -137,10 +124,6 @@ class LinearAccelerometerLoader(BaseLoader):
     FILENAME = "Linear_Accelerometer.csv"
 
     @property
-    def columns(self) -> list[str]:
-        return ["X (m/s^2)", "Y (m/s^2)", "Z (m/s^2)"]
-
-    @property
     def column_function_map(self) -> dict[str, Callable]:
         return {
             "X (m/s^2)": np.mean,
@@ -155,19 +138,6 @@ class LinearAccelerometerLoader(BaseLoader):
 class LocationLoader(BaseLoader):
 
     FILENAME = "Location.csv"
-
-    @property
-    def columns(self) -> list[str]:
-        return [
-            "Latitude (°)",
-            "Longitude (°)",
-            "Height (m)",
-            "Velocity (m/s)",
-            # Are this following any relevant ?
-            # "Direction (°)",
-            # "Horizontal Accuracy (m)",
-            # "Vertical Accuracy (°)",
-        ]
 
     @property
     def column_function_map(self) -> dict[str, Callable]:
@@ -196,10 +166,6 @@ class MagnetometerLoader(BaseLoader):
     FILENAME = "Magnetometer.csv"
 
     @property
-    def columns(self) -> list[str]:
-        return ["X (µT)", "Y (µT)", "Z (µT)"]
-
-    @property
     def column_function_map(self) -> dict[str, Callable]:
         return {
             "X (µT)": np.mean,
@@ -214,10 +180,6 @@ class MagnetometerLoader(BaseLoader):
 class ProximityLoader(BaseLoader):
 
     FILENAME = "Proximity.csv"
-
-    @property
-    def columns(self) -> list[str]:
-        return ["Distance (cm)"]
 
     @property
     def column_function_map(self) -> dict[str, Callable]:
