@@ -1,11 +1,27 @@
 import os
-from typing import Callable
+import re
+from typing import Callable, Union
 
 import numpy as np
 import pandas as pd
 
 
 class BaseLoader:
+    """
+    To load data from the raw .csv's
+
+    The following must be implemented in children classes:
+        - **FILENAME**: (class variable) (e.g. "Accelerometer.csv)
+        - **columns**: (property) (e.g. ["X (m/s^2)", "Y (m/s^2)", "Z (m/s^2)"])
+        - **column_function_map**: (property) (a map between column name and
+            aggregation function for that column)
+
+    This is basically to account for the variability in the column names and
+    the potential different aggregation methods depending on 1) type of sensor
+    and 2) type of variable measured by that sensor.
+
+    Check the method `load()` to get an idea of what this is for
+    """
 
     FILENAME = ""
 
@@ -21,9 +37,8 @@ class BaseLoader:
         self.path = self.check_path(base_path)
         self.date_range = date_range.sort_values()
 
-    @classmethod
-    def check_path(cls, base_path: str) -> str:
-        path = os.path.join(base_path, cls.FILENAME)
+    def check_path(self, base_path: str) -> str:
+        path = os.path.join(base_path, self.FILENAME)
         assert os.path.exists(path), f"Provided file: {path} doesn't exist!"
         return path
 
@@ -39,13 +54,26 @@ class BaseLoader:
             res[t] = self.column_function_map[s.name](s.loc[t:t_next])
         return res
 
+    def rename_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        base_name = self.FILENAME.rstrip(".csv") + "_"
+        df.columns = [
+            base_name
+            + re.sub(pattern=r"\(.*\)", repl="", string=col).strip().replace(" ", "_")
+            for col in df.columns
+        ]
+        return df
+
     def load(self) -> pd.DataFrame:
         res = pd.DataFrame()
         df = pd.read_csv(self.path)
         df = self.parse_timedeltas(df)
         for col in self.columns:
             res[col] = self.aggregate(df[col], self.date_range)
+        res = self.rename_columns(res)
         return res
+
+    def __str__(self) -> str:
+        pass
 
 
 class AccelerometerLoader(BaseLoader):
@@ -64,80 +92,147 @@ class AccelerometerLoader(BaseLoader):
             "Z (m/s^2)": np.mean,
         }
 
+    def __str__(self) -> str:
+        return "Accelerometer Loader"
+
 
 class BarometerLoader(BaseLoader):
 
-    FILENAME = ""
+    FILENAME = "Barometer.csv"
 
     @property
     def columns(self) -> list[str]:
-        pass
+        return ["X (hPa)"]
 
     @property
     def column_function_map(self) -> dict[str, Callable]:
-        pass
+        return {"X (hPa)": np.mean}
+
+    def __str__(self) -> str:
+        return "Barometer Loader"
 
 
 class GyroscopeLoader(BaseLoader):
 
-    FILENAME = ""
+    FILENAME = "Gyroscope.csv"
 
     @property
     def columns(self) -> list[str]:
-        pass
+        return ["X (rad/s)", "Y (rad/s)", "Z (rad/s)"]
 
     @property
     def column_function_map(self) -> dict[str, Callable]:
-        pass
+        return {
+            "X (rad/s)": np.mean,
+            "Y (rad/s)": np.mean,
+            "Z (rad/s)": np.mean,
+        }
+
+    def __str__(self) -> str:
+        return "Gyroscope Loader"
 
 
 class LinearAccelerometerLoader(BaseLoader):
 
-    FILENAME = ""
+    FILENAME = "Linear_Accelerometer.csv"
 
     @property
     def columns(self) -> list[str]:
-        pass
+        return ["X (m/s^2)", "Y (m/s^2)", "Z (m/s^2)"]
 
     @property
     def column_function_map(self) -> dict[str, Callable]:
-        pass
+        return {
+            "X (m/s^2)": np.mean,
+            "Y (m/s^2)": np.mean,
+            "Z (m/s^2)": np.mean,
+        }
+
+    def __str__(self) -> str:
+        return "Linear Accelerometer Loader"
 
 
 class LocationLoader(BaseLoader):
 
-    FILENAME = ""
+    FILENAME = "Location.csv"
 
     @property
     def columns(self) -> list[str]:
-        pass
+        return [
+            "Latitude (°)",
+            "Longitude (°)",
+            "Height (m)",
+            "Velocity (m/s)",
+            # Are this following any relevant ?
+            # "Direction (°)",
+            # "Horizontal Accuracy (m)",
+            # "Vertical Accuracy (°)",
+        ]
 
     @property
     def column_function_map(self) -> dict[str, Callable]:
-        pass
+        return {
+            "Latitude (°)": self.get_last,
+            "Longitude (°)": self.get_last,
+            "Height (m)": self.get_last,
+            "Velocity (m/s)": self.get_last,
+            # Are this following any relevant ?
+            # "Direction (°)": ...,
+            # "Horizontal Accuracy (m)": ...,
+            # "Vertical Accuracy (°)": ...,
+        }
+
+    def get_last(self, s: Union[pd.NA, pd.Series]):
+        if not s.empty:
+            return s.to_numpy()[-1]
+        return np.nan
+
+    def __str__(self) -> str:
+        return "Location Loader"
 
 
 class MagnetometerLoader(BaseLoader):
 
-    FILENAME = ""
+    FILENAME = "Magnetometer.csv"
 
     @property
     def columns(self) -> list[str]:
-        pass
+        return ["X (µT)", "Y (µT)", "Z (µT)"]
 
     @property
     def column_function_map(self) -> dict[str, Callable]:
-        pass
+        return {
+            "X (µT)": np.mean,
+            "Y (µT)": np.mean,
+            "Z (µT)": np.mean,
+        }
+
+    def __str__(self) -> str:
+        return "Magnetometer Loader"
 
 
 class ProximityLoader(BaseLoader):
 
-    FILENAME = ""
+    FILENAME = "Proximity.csv"
 
     @property
     def columns(self) -> list[str]:
-        pass
+        return ["Distance (cm)"]
 
     @property
     def column_function_map(self) -> dict[str, Callable]:
-        pass
+        return {"Distance (cm)": np.mean}
+
+    def __str__(self) -> str:
+        return "Proximity Loader"
+
+
+__all__ = (
+    "AccelerometerLoader",
+    "BarometerLoader",
+    "GyroscopeLoader",
+    "LinearAccelerometerLoader",
+    "LocationLoader",
+    "MagnetometerLoader",
+    "ProximityLoader",
+)
