@@ -209,13 +209,13 @@ class HeartRateLoader(BaseLoader):
         return df.set_index(time_key)
 
 
-__all__ = (
-    "AccelerometerLoader",
-    "BarometerLoader",
-    "GyroscopeLoader",
-    "LinearAccelerometerLoader",
-    "LocationLoader",
-    "MagnetometerLoader",
-    "ProximityLoader",
-    "HeartRateLoader",
+ALL_LOADERS = (
+    AccelerometerLoader,
+    BarometerLoader,
+    GyroscopeLoader,
+    LinearAccelerometerLoader,
+    LocationLoader,
+    MagnetometerLoader,
+    ProximityLoader,
+    HeartRateLoader,
 )

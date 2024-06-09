@@ -3,16 +3,7 @@ from typing import Generator
 
 import pandas as pd
 
-from utils import (
-    AccelerometerLoader,
-    BarometerLoader,
-    GyroscopeLoader,
-    HeartRateLoader,
-    LinearAccelerometerLoader,
-    LocationLoader,
-    MagnetometerLoader,
-    ProximityLoader,
-)
+from utils.loaders import ALL_LOADERS
 
 
 def get_exp_start_end(base_path: str) -> tuple[pd.Timestamp, pd.Timestamp]:
@@ -36,16 +27,7 @@ def load_all(base_path: str, date_range: pd.DatetimeIndex) -> Generator:
     """
     Returns generator with processed data frames for each of the sensor loaders
     """
-    for loader_class in [
-        AccelerometerLoader,
-        BarometerLoader,
-        GyroscopeLoader,
-        LinearAccelerometerLoader,
-        LocationLoader,
-        MagnetometerLoader,
-        ProximityLoader,
-        HeartRateLoader,
-    ]:
+    for loader_class in ALL_LOADERS:
         loader = loader_class(base_path=base_path, date_range=date_range)
         yield loader.load()
 
