@@ -2,6 +2,7 @@ from .loaders import (
     AccelerometerLoader,
     BarometerLoader,
     GyroscopeLoader,
+    HeartRateLoader,
     LinearAccelerometerLoader,
     LocationLoader,
     MagnetometerLoader,

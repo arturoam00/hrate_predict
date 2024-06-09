@@ -1,2 +1,4 @@
+IPython
+ipykernel
 pandas
 python-dotenv

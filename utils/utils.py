@@ -7,6 +7,7 @@ from utils import (
     AccelerometerLoader,
     BarometerLoader,
     GyroscopeLoader,
+    HeartRateLoader,
     LinearAccelerometerLoader,
     LocationLoader,
     MagnetometerLoader,
@@ -21,9 +22,13 @@ def get_exp_start_end(base_path: str) -> tuple[pd.Timestamp, pd.Timestamp]:
     """
     path = os.path.join(base_path, "time.csv")
     assert os.path.exists(path), f"Unable to find {path}! Check downloaded files"
-    times = pd.read_csv(path, parse_dates=["system time text"])[
-        "system time text"
-    ].to_numpy()
+    times = (
+        pd.read_csv(path, parse_dates=["system time text"])["system time text"]
+        .dt.tz_localize(
+            None
+        )  # Data from some sensors (heart rate) doesn't come wiht tz info
+        .to_numpy()
+    )
     return times[0], times[-1]
 
 
@@ -39,6 +44,7 @@ def load_all(base_path: str, date_range: pd.DatetimeIndex) -> Generator:
         LocationLoader,
         MagnetometerLoader,
         ProximityLoader,
+        HeartRateLoader,
     ]:
         loader = loader_class(base_path=base_path, date_range=date_range)
         yield loader.load()

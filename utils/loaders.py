@@ -4,6 +4,7 @@ from typing import Callable, Union
 
 import numpy as np
 import pandas as pd
+import pytz
 
 
 class BaseLoader:
@@ -41,10 +42,12 @@ class BaseLoader:
         assert os.path.exists(path), f"Provided file: {path} doesn't exist!"
         return path
 
-    def parse_timedeltas(self, df: pd.DataFrame) -> pd.DataFrame:
+    def parse_timekeys(self, df: pd.DataFrame) -> pd.DataFrame:
         time_key = "Time (s)"
         start = self.date_range[0]
         df[time_key] = pd.to_timedelta(df[time_key], unit="s") + start
+        # Data from some sensors (heart rate) doesn't come with tz info
+        df[time_key] = df[time_key].dt.tz_localize(None)
         return df.set_index(time_key)
 
     def aggregate(self, s: pd.Series, date_range: pd.DatetimeIndex) -> pd.Series:
@@ -64,8 +67,11 @@ class BaseLoader:
 
     def load(self) -> pd.DataFrame:
         res = pd.DataFrame()
+        # Read raw file
         df = pd.read_csv(self.path)
-        df = self.parse_timedeltas(df)
+        # Parse column with datetime information
+        df = self.parse_timekeys(df)
+        # Aggregate data from every column according to certain functiono
         for col in self.columns:
             res[col] = self.aggregate(df[col], self.date_range)
         res = self.rename_columns(res)
@@ -189,6 +195,20 @@ class ProximityLoader(BaseLoader):
         return "Proximity Loader"
 
 
+class HeartRateLoader(BaseLoader):
+
+    FILENAME = "Heart_rate.csv"
+
+    @property
+    def column_function_map(self) -> dict[str, Callable]:
+        return {"Avg (count/min)": np.mean}
+
+    def parse_timekeys(self, df: pd.DataFrame) -> pd.DataFrame:
+        time_key = "Date/Time"
+        df[time_key] = pd.to_datetime(df[time_key])
+        return df.set_index(time_key)
+
+
 __all__ = (
     "AccelerometerLoader",
     "BarometerLoader",
@@ -197,4 +217,5 @@ __all__ = (
     "LocationLoader",
     "MagnetometerLoader",
     "ProximityLoader",
+    "HeartRateLoader",
 )
