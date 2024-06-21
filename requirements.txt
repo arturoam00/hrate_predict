@@ -1,4 +1,7 @@
 IPython
 ipykernel
 pandas
-python-dotenv
+matplotlib
+scipy
+scikit-learn
+scikit-learn-extra
